@@ -297,6 +297,9 @@ PRODUCT_PACKAGES += \
     android.hardware.gatekeeper@1.0-service.software \
     android.hardware.keymaster@3.0-impl \
     android.hardware.keymaster@3.0-service
+else ifeq ($(TARGET_TEGRA_TOS),trusty)
+$(call inherit-product, system/core/trusty/trusty-base.mk)
+$(call inherit-product, system/core/trusty/trusty-storage.mk)
 endif
 
 # Update Engine
