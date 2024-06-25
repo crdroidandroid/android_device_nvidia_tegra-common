@@ -134,7 +134,9 @@ endif
 endif
 
 # Boot Control
-ifneq ($(TARGET_TEGRA_BOOTCTRL),)
+ifeq ($(TARGET_TEGRA_BOOTCTRL),)
+AB_OTA_UPDATER := false
+else
 AB_OTA_UPDATER := true
 PRODUCT_PACKAGES += \
     android.hardware.boot@1.0-service
