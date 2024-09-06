@@ -74,6 +74,11 @@ endif
 # Odm permissions
 TARGET_FS_CONFIG_GEN += device/nvidia/tegra-common/config.fs
 
+# Sensors
+ifneq ($(TARGET_TEGRA_SENSORS),)
+DEVICE_MANIFEST_FILE += device/nvidia/tegra-common/manifests/sensors.xml
+endif
+
 # Wifi
 ifneq ($(TARGET_TEGRA_WIFI),)
 # rtl8822ce driver works with bcm userspace
