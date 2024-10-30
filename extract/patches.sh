@@ -116,7 +116,7 @@ function patch_nvpmodel() {
   popd 1>/dev/null 2>&1
   rm -rf ${LOCALTMPDIR}
   rm ${LINEAGE_ROOT}/${OUTDIR}/common/r35/nvpmodel/nvidia-l4t-nvpmodel_arm64.deb
-  ${LINEAGE_ROOT}/prebuilts/extract-tools/linux-x86/bin/patchelf-0_9 --set-interpreter /vendor/bin/l4t/ld-linux-aarch64.so.1 ${LINEAGE_ROOT}/${OUTDIR}/common/r35/nvpmodel/bin64/nvpmodel 1>/dev/null 2>&1
+  ${PATCHELF} --set-interpreter /vendor/bin/l4t/ld-linux-aarch64.so.1 ${LINEAGE_ROOT}/${OUTDIR}/common/r35/nvpmodel/bin64/nvpmodel 1>/dev/null 2>&1
   sed -i "s|/var/lib|/odm/etc|g" ${LINEAGE_ROOT}/${OUTDIR}/common/r35/nvpmodel/bin64/nvpmodel
 
   echo "";
