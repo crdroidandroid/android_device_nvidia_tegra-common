@@ -61,6 +61,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.hardware.hwcomposer=drm_minigbm \
     ro.hardware.egl=angle \
     ro.hardware.vulkan=pastel
+PRODUCT_SYSTEM_PROPERTIES += \
+    service.sf.prime_shader_cache=0
 endif
 
 # LMKD
