@@ -414,6 +414,8 @@ PRODUCT_PACKAGES += \
 endif
 
 ifeq ($(TARGET_TEGRA_WIREGUARD),compat)
+ifneq ($(filter 3.10 4.9, $(TARGET_TEGRA_KERNEL)),)
 PRODUCT_PACKAGES += \
     wireguard
+endif
 endif
