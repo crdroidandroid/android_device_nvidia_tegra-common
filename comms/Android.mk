@@ -23,27 +23,3 @@ $(BT_IMPL_SYMLINK): $(LOCAL_INSTALLED_MODULE)
 
 ALL_DEFAULT_INSTALLED_MODULES += $(BT_IMPL_SYMLINK)
 endif
-
-include $(CLEAR_VARS)
-LOCAL_MODULE               := android.hardware.bluetooth-service.default-tegra.rc
-LOCAL_MODULE_CLASS         := ETC
-LOCAL_SRC_FILES            := android.hardware.bluetooth-service.default-tegra.rc
-LOCAL_VENDOR_MODULE        := true
-LOCAL_MODULE_RELATIVE_PATH := init
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE               := p2p_supplicant_overlay.conf
-LOCAL_MODULE_CLASS         := ETC
-LOCAL_SRC_FILES            := p2p_supplicant_overlay.conf
-LOCAL_VENDOR_MODULE        := true
-LOCAL_MODULE_RELATIVE_PATH := wifi
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE               := wpa_supplicant_overlay.conf
-LOCAL_MODULE_CLASS         := ETC
-LOCAL_SRC_FILES            := wpa_supplicant_overlay.conf
-LOCAL_VENDOR_MODULE        := true
-LOCAL_MODULE_RELATIVE_PATH := wifi
-include $(BUILD_PREBUILT)
