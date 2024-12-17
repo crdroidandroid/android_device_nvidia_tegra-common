@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2024 The LineageOS Project
+# Copyright (C) 2023 The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-BUILD_TOP ?= $(abspath .)
-KERNEL_MAKE_CMD ?= $(BUILD_TOP)/prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/make
+MFORMAT_SYMLINK := $(HOST_OUT_EXECUTABLES)/mformat
+MTOOLS_HOST     := $(HOST_OUT_EXECUTABLES)/mtools
+$(MFORMAT_SYMLINK): $(MTOOLS_HOST)
+	$(hide) ln -sf mtools $@

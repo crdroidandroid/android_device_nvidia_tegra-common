@@ -136,20 +136,6 @@ function fetch_sources() {
     local LINEAGE_TOOLS=${LINEAGE_ROOT}/tools/extract-utils
     local COMMON_EXTRACT=${LINEAGE_ROOT}/device/nvidia/tegra-common/extract
 
-    if [ -n "${CACHEDIR}" -a -z "${PRIMECACHE}" ]; then
-        for key in "${!SOURCE_PATHS[@]}"; do
-            while read -r sname url type branch extra_path; do
-                SOURCE_BRANCH[${sname}]="${branch}";
-                if [ ! -d "${CACHEDIR}/${sname}" ]; then
-                    echo "";
-                    echo "Cache is missing sources, please re-prime the cache.";
-                    exit -1;
-                fi;
-            done < "${LINEAGE_ROOT}/device/${SOURCE_PATHS["$key"]}/extract/sources.txt";
-        done;
-	return;
-    fi;
-
     mkdir ${TMPDIR}/downloads;
     mkdir ${TMPDIR}/extract;
 
@@ -243,8 +229,6 @@ function fetch_sources() {
                         # 7z complains about 'dangerous symlinks', so the return value must be ignored
                         7z x -o${ESPATH}/system ${ESPATH}/system.img 1>/dev/null 2>&1 || true;
 
-			mv ${ESPATH}/nv-recovery-*/blob ${ESPATH}/blob || true;
-
                         rm -rf \
                           ${ESPATH}/nv-recovery-* \
                           ${ESPATH}/system.img;
@@ -261,8 +245,6 @@ function fetch_sources() {
                         simg2img ${ESPATH}/nv-recovery-image-*/vendor.img ${ESPATH}/vendor.img;
                         # 7z complains about 'dangerous symlinks', so the return value must be ignored
                         7z x -o${ESPATH}/vendor ${ESPATH}/vendor.img 1>/dev/null 2>&1 || true;
-
-			mv ${ESPATH}/nv-recovery-*/blob ${ESPATH}/blob || true;
 
                         rm -rf \
                           ${ESPATH}/nv-recovery-image-* \
@@ -322,11 +304,6 @@ function fetch_sources() {
             echo "";
         done < "${LINEAGE_ROOT}/device/${SOURCE_PATHS["$key"]}/extract/sources.txt";
     done;
-
-    if [ -n "${PRIMECACHE}" ]; then
-        cp -r ${TMPDIR}/extract/* ${CACHEDIR}/;
-	exit 0;
-    fi;
 }
 
 #
@@ -334,13 +311,6 @@ function fetch_sources() {
 #
 function copy_files() {
     echo "Copying files...";
-
-    declare -a MISSING_PATHS=();
-
-    EXTRACTDIR="${TMPDIR}/extract";
-    if [ -n "${CACHEDIR}" ]; then
-        EXTRACTDIR="${CACHEDIR}";
-    fi;
 
     for key in "${!FILELIST_PATHS[@]}"; do
         local project="${FILELIST_PATHS["$key"]}";
@@ -357,38 +327,17 @@ function copy_files() {
                 dest="${dest}$(basename ${source})";
             fi;
 
-            if [ -f "${EXTRACTDIR}/${sname}/${source}" ]; then
+            if [ -f "${TMPDIR}/extract/${sname}/${source}" ]; then
                 echo "  * ${project}/${SOURCE_BRANCH[$sname]}/${dest}";
                 mkdir -p ${LINEAGE_ROOT}/vendor/$(dirname ${project}/${SOURCE_BRANCH[$sname]}/$dest);
-
-                # If asked to unstrip elf file, check for the debugdata section.
-                # If ivrodata section exists, ignore file because the extra sections confuse unstrip.
-                if [ -n "${EXTRACT_UNSTRIP}" ] && file -b ${EXTRACTDIR}/${sname}/${source} |grep ^ELF 2>&1 1>/dev/null && \
-                   llvm-objdump -h ${EXTRACTDIR}/${sname}/${source} |grep gnu_debugdata 2>&1 > /dev/null && \
-                   ! (llvm-objdump -h ${EXTRACTDIR}/${sname}/${source} |grep ivrodata 2>&1 > /dev/null); then
-                    echo "    - Found debugdata";
-                    llvm-objcopy --dump-section .gnu_debugdata=/dev/stdout ${EXTRACTDIR}/${sname}/${source} | xz -d > ${EXTRACTDIR}/${sname}/${source}.dbg;
-                    eu-unstrip ${EXTRACTDIR}/${sname}/${source} ${EXTRACTDIR}/${sname}/${source}.dbg -o ${LINEAGE_ROOT}/vendor/${project}/${SOURCE_BRANCH[$sname]}/${dest};
-                else
-                    cp ${EXTRACTDIR}/${sname}/${source} ${LINEAGE_ROOT}/vendor/${project}/${SOURCE_BRANCH[$sname]}/${dest};
-                fi;
+                cp ${TMPDIR}/extract/${sname}/${source} ${LINEAGE_ROOT}/vendor/${project}/${SOURCE_BRANCH[$sname]}/${dest};
             else
                 echo "  X ${source} is missing from ${sname} for ${project}";
-		MISSING_PATHS+=("${project}/${SOURCE_BRANCH[$sname]}/${dest}");
             fi;
         done < "${LINEAGE_ROOT}/device/${FILELIST_PATHS["$key"]}/extract/file.list";
 
         find ${LINEAGE_ROOT}/vendor/${project} -type f -exec chmod 644 {} \;
     done;
-
-    if [ ! ${#MISSING_PATHS[@]} -eq 0 ]; then
-        echo "";
-        echo "Some targets failed to extract:";
-        for path in "${MISSING_PATHS[@]}"; do
-            echo "  ${path}";
-        done;
-	exit -1;
-    fi;
 
     echo "Finished copying files.";
 }
@@ -449,7 +398,7 @@ function extract() {
         exit 1
     fi
 
-    if [ "$VENDOR_STATE" -eq "0" -a -z "${PRIMECACHE}" ]; then
+    if [ "$VENDOR_STATE" -eq "0" ]; then
         for key in "${!FILELIST_PATHS[@]}"; do
             local project="${FILELIST_PATHS["$key"]}";
             if [ "${project}" == "nvidia/tegra-common" ]; then

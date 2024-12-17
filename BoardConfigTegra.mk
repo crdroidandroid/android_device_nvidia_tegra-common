@@ -20,9 +20,7 @@ DEVICE_MANIFEST_FILE ?= device/nvidia/tegra-common/manifests/manifest.$(TARGET_T
 # Audio
 ifneq ($(TARGET_TEGRA_AUDIO),)
 ifeq ($(filter audio, $(TARGET_TEGRA_DOLBY)),)
-ifneq ($(TARGET_TEGRA_AUDIO),aidl)
 DEVICE_MANIFEST_FILE += device/nvidia/tegra-common/manifests/audio.xml
-endif
 endif
 ifeq ($(TARGET_TEGRA_AUDIO),tinyhal)
 BOARD_USES_TINYHAL_AUDIO := true
@@ -41,9 +39,7 @@ endif
 
 # Boot Control
 ifneq ($(TARGET_TEGRA_BOOTCTRL),)
-ifeq ($(shell expr $(TARGET_TEGRA_MAN_LVL) \< 8), 1)
 DEVICE_MANIFEST_FILE += device/nvidia/tegra-common/manifests/boot.xml
-endif
 endif
 
 # CEC
@@ -53,8 +49,7 @@ endif
 
 # Graphics
 ifeq ($(TARGET_TEGRA_GPU),drm)
-BOARD_MESA3D_USES_MESON_BUILD := true
-BOARD_MESA3D_GALLIUM_DRIVERS ?= nouveau tegra
+BOARD_GPU_DRIVERS         ?= nouveau tegra
 BOARD_USES_DRM_HWCOMPOSER := true
 DEVICE_MANIFEST_FILE      += device/nvidia/tegra-common/manifests/drm.xml
 TARGET_USES_HWC2          := true
@@ -72,12 +67,8 @@ DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += \
 endif
 
 # Keystore
-ifneq ($(filter rel-shield-r, $(TARGET_TEGRA_TOS)),)
+ifneq ($(TARGET_TEGRA_TOS),)
 DEVICE_MANIFEST_FILE += device/nvidia/tegra-common/manifests/keystore.xml
-else ifeq ($(TARGET_TEGRA_TOS),software)
-ifeq ($(shell expr $(TARGET_TEGRA_MAN_LVL) \< 8), 1)
-DEVICE_MANIFEST_FILE += device/nvidia/tegra-common/manifests/keystore.xml
-endif
 endif
 
 # Odm permissions

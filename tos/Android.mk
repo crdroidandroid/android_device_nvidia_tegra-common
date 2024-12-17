@@ -1,4 +1,4 @@
-# Copyright (C) 2020 The LineageOS Project
+# Copyright (C) 2022 The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-COMMON_NVCPL_PATH := vendor/nvidia/common/nvcpl
+LOCAL_PATH := $(call my-dir)
 
-PRODUCT_PACKAGES += \
-    NvCPLSvc \
-    vendor.nvidia.hardware.cpl.service@1.0-service \
-    vendor.nvidia.hardware.cpl.service_common@1.0-service
+include $(LOCAL_PATH)/atf.mk
+include $(LOCAL_PATH)/edk2.mk
+include $(LOCAL_PATH)/trusty.mk
+include $(LOCAL_PATH)/tos.mk
+ifneq ($(TARGET_TEGRA_UBOOT_CONFIG),)
+include $(LOCAL_PATH)/u-boot.mk
+endif

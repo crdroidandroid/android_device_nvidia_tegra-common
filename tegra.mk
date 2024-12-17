@@ -14,29 +14,19 @@
 # limitations under the License.
 #
 
-include device/nvidia/tegra-common/aosp-compat.mk
-
 TARGET_TEGRA_DEFAULT_BRANCH ?= rel-shield-r
 TARGET_TEGRA_L4T_BRANCH     ?= r35
 
-ifneq ($(filter 3.10 4.9 5.10, $(TARGET_TEGRA_KERNEL)),)
 TARGET_TEGRA_AUDIO    ?= $(TARGET_TEGRA_DEFAULT_BRANCH)
 TARGET_TEGRA_GPU      ?= $(TARGET_TEGRA_DEFAULT_BRANCH)
 TARGET_TEGRA_OMX      ?= $(TARGET_TEGRA_DEFAULT_BRANCH)
+TARGET_TEGRA_PHS      ?= $(TARGET_TEGRA_DEFAULT_BRANCH)
 TARGET_TEGRA_TOS      ?= $(if $(TARGET_TEGRA_KEYSTORE),$(TARGET_TEGRA_KEYSTORE),$(TARGET_TEGRA_DEFAULT_BRANCH))
 
 TARGET_TEGRA_CEC      ?= lineage
 TARGET_TEGRA_HEALTH   ?= aosp
 TARGET_TEGRA_MEMTRACK ?= lineage
-else
-TARGET_TEGRA_AUDIO    ?= $(TARGET_TEGRA_DEFAULT_BRANCH)
-TARGET_TEGRA_GPU      ?= drm
-TARGET_TEGRA_OMX      ?= software
-TARGET_TEGRA_TOS      ?= software
-
-TARGET_TEGRA_CEC      ?= aosp
-TARGET_TEGRA_HEALTH   ?= aosp
-endif
+TARGET_TEGRA_POWER    ?= aosp
 
 ifeq ($(TARGET_TEGRA_MAN_LVL),)
 ifeq ($(TARGET_TEGRA_KERNEL),4.9)
@@ -49,19 +39,7 @@ else ifeq ($(TARGET_TEGRA_KERNEL),6.1)
 TARGET_TEGRA_MAN_LVL := 8
 else ifeq ($(TARGET_TEGRA_KERNEL),6.6)
 TARGET_TEGRA_MAN_LVL := 202404
-else ifeq ($(TARGET_TEGRA_KERNEL),6.12)
-TARGET_TEGRA_MAN_LVL := 202504
 endif
-endif
-
-ifneq ($(shell expr $(TARGET_TEGRA_MAN_LVL) \<= 5), 1)
-TARGET_TEGRA_POWER ?= aosp
-else
-TARGET_TEGRA_POWER ?= perfmgr
-endif
-
-ifneq ($(filter $(TARGET_TEGRA_POWER), aosp lineage),)
-TARGET_TEGRA_PHS ?= $(TARGET_TEGRA_DEFAULT_BRANCH)
 endif
 
 # Enable nvidia framework enhancements if available
@@ -103,10 +81,7 @@ PRODUCT_COPY_FILES += \
 
 # Audio
 TARGET_EXCLUDES_AUDIOFX := true
-ifeq ($(TARGET_TEGRA_AUDIO),aidl)
-PRODUCT_PACKAGES += \
-    com.android.hardware.audio
-else ifneq ($(TARGET_TEGRA_AUDIO),)
+ifneq ($(TARGET_TEGRA_AUDIO),)
 PRODUCT_PACKAGES += \
     android.hardware.audio.service \
     android.hardware.audio@6.0 \
@@ -164,17 +139,6 @@ AB_OTA_UPDATER := false
 $(call inherit-product, $(SRC_TARGET_DIR)/product/non_ab_device.mk)
 else
 AB_OTA_UPDATER := true
-ifeq ($(shell expr $(TARGET_TEGRA_MAN_LVL) \>= 8), 1)
-ifeq ($(TARGET_TEGRA_BOOTCTRL),smd)
-PRODUCT_PACKAGES += \
-    android.hardware.boot-service.nvidia \
-    android.hardware.boot-service.nvidia.recovery
-else ifeq ($(TARGET_TEGRA_BOOTCTRL),efi)
-PRODUCT_PACKAGES += \
-    android.hardware.boot-service.nvidia-efi \
-    android.hardware.boot-service.nvidia-efi.recovery
-endif
-else
 PRODUCT_PACKAGES += \
     android.hardware.boot@1.0-service
 PRODUCT_PACKAGES_DEBUG += \
@@ -188,7 +152,6 @@ else ifeq ($(TARGET_TEGRA_BOOTCTRL),efi)
 PRODUCT_PACKAGES += \
     android.hardware.boot@1.0-impl.nvidia-efi \
     android.hardware.boot@1.0-impl.nvidia-efi.recovery
-endif
 endif
 endif
 
@@ -228,17 +191,14 @@ PRODUCT_PACKAGES += \
     disable_configstore
 endif
 ifeq ($(TARGET_TEGRA_GPU),drm)
+PRODUCT_SOONG_NAMESPACES += external/mesa3d
 PRODUCT_PACKAGES += \
     android.hardware.graphics.allocator@4.0-service.minigbm \
     android.hardware.graphics.mapper@4.0-impl.minigbm \
     android.hardware.graphics.composer@2.4-service \
     hwcomposer.drm \
     gralloc.minigbm \
-    libEGL_mesa \
-    libGLESv1_CM_mesa \
-    libGLESv2_mesa \
-    libgallium_dri \
-    libglapi
+    libGLES_mesa
 else ifeq ($(TARGET_TEGRA_GPU),swiftshader)
 PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
 PRODUCT_PACKAGES += \
@@ -297,13 +257,8 @@ endif
 
 # OMX
 ifeq ($(TARGET_TEGRA_OMX),software)
-ifneq ($(filter $(TARGET_TEGRA_KERNEL), 3.4 3.10 4.4 4.9 5.10),)
 PRODUCT_PROPERTY_OVERRIDES += \
     debug.stagefright.c2-poolmask=0x80000
-else
-PRODUCT_PROPERTY_OVERRIDES += \
-    debug.stagefright.c2inputsurface=-1
-endif
 endif
 
 # PHS
@@ -316,20 +271,7 @@ PRODUCT_PACKAGES += \
 endif
 
 # Power
-ifeq ($(TARGET_TEGRA_POWER),perfmgr)
-PRODUCT_PACKAGES += \
-    android.hardware.power-service.lineage-libperfmgr \
-    powerhint.json
-
-PRODUCT_SOONG_NAMESPACES += \
-    hardware/google/interfaces \
-    hardware/google/pixel \
-    hardware/lineage/interfaces/power-libperfmgr
-
-ifneq ($(TARGET_TEGRA_PHS),)
-$(error Perfmgr and ussr/phs are incompatible)
-endif
-else
+ifneq ($(filter $(TARGET_TEGRA_POWER), aosp lineage),)
 TARGET_POWERHAL_VARIANT := tegra
 PRODUCT_PACKAGES += \
     vendor.nvidia.hardware.power@1.0-service
@@ -365,16 +307,10 @@ endif
 
 # TOS
 ifeq ($(TARGET_TEGRA_TOS),software)
-ifeq ($(shell expr $(TARGET_TEGRA_MAN_LVL) \>= 8), 1)
-PRODUCT_PACKAGES += \
-    com.android.hardware.gatekeeper.nonsecure \
-    android.hardware.security.keymint-service.nonsecure
-else
 PRODUCT_PACKAGES += \
     android.hardware.gatekeeper@1.0-service.software \
     android.hardware.keymaster@3.0-impl \
     android.hardware.keymaster@3.0-service
-endif
 else ifeq ($(TARGET_TEGRA_TOS),trusty)
 $(call inherit-product, system/core/trusty/trusty-base.mk)
 $(call inherit-product, system/core/trusty/trusty-storage.mk)
@@ -414,8 +350,6 @@ PRODUCT_PACKAGES += \
 endif
 
 ifeq ($(TARGET_TEGRA_WIREGUARD),compat)
-ifneq ($(filter 3.10 4.9, $(TARGET_TEGRA_KERNEL)),)
 PRODUCT_PACKAGES += \
     wireguard
-endif
 endif

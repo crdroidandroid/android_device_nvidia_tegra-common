@@ -13,5 +13,4 @@
 # limitations under the License.
 
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.3-service.widevine \
-    liboemcrypto
+    android.hardware.drm@1.3-service.widevine
